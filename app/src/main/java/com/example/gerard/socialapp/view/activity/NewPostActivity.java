@@ -14,6 +14,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.example.gerard.socialapp.GlideApp;
 import com.example.gerard.socialapp.MediaFiles;
@@ -26,6 +27,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ServerValue;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.UploadTask;
 
@@ -205,7 +207,7 @@ public class NewPostActivity extends AppCompatActivity {
     private void writeNewPost(String postText, String mediaUrl) {
         String postKey = mReference.push().getKey();
 
-        Post post = new Post(mUser.getUid(), mUser.getDisplayName(), mUser.getPhotoUrl().toString(), postText, mediaUrl, mediaType);
+        Post post = new Post(mUser.getUid(), mUser.getDisplayName(), mUser.getPhotoUrl().toString(), postText, mediaUrl, mediaType, ServerValue.TIMESTAMP);
         Map<String, Object> postValues = post.toMap();
 
         Map<String, Object> childUpdates = new HashMap<>();
@@ -256,7 +258,9 @@ public class NewPostActivity extends AppCompatActivity {
 
             Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
-            startActivityForResult(intent, RC_IMAGE_TAKE);
+            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+            intent.setAction(Intent.ACTION_GET_CONTENT);
+            startActivityForResult(Intent.createChooser(intent,"Select Picture"), 1);
         }
     }
 
@@ -311,5 +315,23 @@ public class NewPostActivity extends AppCompatActivity {
             mRecorder.release();
             mRecorder = null;
         }
+    }
+    @Override
+    protected void onSaveInstanceState(Bundle savedInstanceState){
+            super.onSaveInstanceState(savedInstanceState);
+            if(mediaUri != null){
+                savedInstanceState.putString("mediaUri",mediaUri.toString());
+            }
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState){
+            super.onRestoreInstanceState(savedInstanceState);
+            String mediaSaved = savedInstanceState.getString("mediaUri");
+
+            if(mediaSaved != null) {
+                mediaUri = Uri.parse(mediaSaved);
+                GlideApp.with(this).load(mediaUri).into(imagePreview);
+            }
     }
 }

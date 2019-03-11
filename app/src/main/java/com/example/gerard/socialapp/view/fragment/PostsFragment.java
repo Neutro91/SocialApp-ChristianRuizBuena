@@ -1,10 +1,14 @@
 package com.example.gerard.socialapp.view.fragment;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.format.DateUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +26,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 
+import java.util.Date;
+
 
 public class PostsFragment extends Fragment {
     public DatabaseReference mReference;
@@ -30,7 +36,7 @@ public class PostsFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_posts, container, false);
+        final View view = inflater.inflate(R.layout.fragment_posts, container, false);
 
         mReference = FirebaseDatabase.getInstance().getReference();
         mUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -55,6 +61,8 @@ public class PostsFragment extends Fragment {
 
                 viewHolder.author.setText(post.author);
                 GlideApp.with(PostsFragment.this).load(post.authorPhotoUrl).circleCrop().into(viewHolder.photo);
+
+                viewHolder.hora.setText(DateUtils.getRelativeTimeSpanString(post.time,System.currentTimeMillis(),DateUtils.MINUTE_IN_MILLIS));
 
                 if (post.likes.containsKey(mUser.getUid())) {
                     viewHolder.like.setImageResource(R.drawable.heart_on);
@@ -88,6 +96,37 @@ public class PostsFragment extends Fragment {
                 }
 
                 viewHolder.numLikes.setText(String.valueOf(post.likes.size()));
+
+                viewHolder.drop.setOnClickListener(new View.OnClickListener() {
+
+                    @Override
+                    public void onClick(View v) {
+                        AlertDialog.Builder a_builder= new AlertDialog.Builder(getActivity());
+                        a_builder.setMessage("Estas seguro de eliminar el mensaje?")
+                                .setCancelable(false)
+                                .setPositiveButton("Si", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        if (post.uid.equals(mUser.getUid())){
+                                            mReference.child("posts/user-posts").child(mUser.getUid()).child(postKey).removeValue();
+                                            mReference.child("posts/user-likes").child(mUser.getUid()).child(postKey).removeValue();
+                                            mReference.child("posts/all_posts").child(postKey).removeValue();
+                                            mReference.child("posts/data").child(postKey).removeValue();
+                                        }
+                                    }
+                                })
+                                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.cancel();
+                                    }
+                                });
+
+                        AlertDialog alert = a_builder.create();
+                        alert.setTitle("Warning");
+                        alert.show();
+                    }
+                });
 
                 viewHolder.likeLayout.setOnClickListener(new View.OnClickListener() {
                     @Override

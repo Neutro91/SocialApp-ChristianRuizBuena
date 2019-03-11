@@ -1,7 +1,9 @@
 package com.example.gerard.socialapp.model;
 
 import com.google.firebase.database.Exclude;
+import com.google.firebase.database.ServerValue;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,17 +14,19 @@ public class Post {
     public String content;
     public String mediaUrl;
     public String mediaType;
+    public long time;
     public Map<String, Boolean> likes = new HashMap<>();
 
     public Post() {}
 
-    public Post(String uid, String author, String authorPhotoUrl, String content, String mediaUrl, String mediaType) {
+    public Post(String uid, String author, String authorPhotoUrl, String content, String mediaUrl, String mediaType, Map time) {
         this.uid = uid;
         this.author = author;
         this.authorPhotoUrl = authorPhotoUrl;
         this.content = content;
         this.mediaUrl = mediaUrl;
         this.mediaType = mediaType;
+        this.time=new Date().getTime();
     }
 
     @Exclude
@@ -35,6 +39,9 @@ public class Post {
         result.put("mediaUrl", mediaUrl);
         result.put("mediaType", mediaType);
         result.put("likes", likes);
+        result.put("time", time);
+        result.put("timestamp", ServerValue.TIMESTAMP);
+
 
         return result;
     }
